@@ -85,7 +85,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	fmt.Println(udp.GetLocalIP())
+	fmt.Println("Started, local IP:", udp.GetLocalIP())
 	go udp.ServeMulticastUDP(UDPHandler)
 	time.Sleep(time.Second)
 	go udp.SendMulicast(UDP_DISCOVER_COMMAND)
@@ -106,7 +106,7 @@ func UDPHandler(src *net.UDPAddr, n int, b []byte) {
 	} else if strings.HasPrefix(message, UDP_SERVER_COMMAND) {
 		if strings.Split(message[len(UDP_SERVER_COMMAND) + 1:], ":")[0] != udp.GetLocalIP() {
 			server := "http://" + message[len(UDP_SERVER_COMMAND) + 1:]
-			fmt.Println("Server found: ", server)
+			//fmt.Println("Server found: ", server)
 			servers[server] = true
 		}
 	}
