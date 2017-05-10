@@ -1,0 +1,10 @@
+[Unit]
+Description=pacmon
+
+[Service]
+ExecStart=/usr/bin/pacmon
+User=pacmon
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
