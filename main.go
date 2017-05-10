@@ -11,6 +11,8 @@ import (
 	"time"
 	"io"
 	"errors"
+	"bufio"
+	"io/ioutil"
 )
 
 const (
@@ -85,12 +87,22 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	fmt.Println("Started, local IP:", udp.GetLocalIP())
-	go udp.ServeMulticastUDP(UDPHandler)
-	time.Sleep(time.Second)
-	go udp.SendMulicast(UDP_DISCOVER_COMMAND)
-	time.Sleep(time.Second * 3)
-	server()
+	if len(os.Args) > 1 {
+
+		if os.Args[1] == "mirrorlist" {
+			mirrorlist()
+		}
+
+	} else {
+
+		fmt.Println("Started, local IP:", udp.GetLocalIP())
+		go udp.ServeMulticastUDP(UDPHandler)
+		time.Sleep(time.Second)
+		go udp.SendMulicast(UDP_DISCOVER_COMMAND)
+		time.Sleep(time.Second * 3)
+		server()
+
+	}
 }
 
 func server() {
@@ -110,4 +122,40 @@ func UDPHandler(src *net.UDPAddr, n int, b []byte) {
 			servers[server] = true
 		}
 	}
+}
+
+func mirrorlist() {
+	serverUrl := "http://" +  udp.GetLocalIP() + ":"+strconv.FormatInt(port, 10)
+	fmt.Println("Mirrorlist, local server:", serverUrl)
+
+	checkLine := "Server = " + serverUrl //TODO: catch cases like "Server =http"...
+	checkResult := false
+	updatedMirrorlist := "# modified by pacmon on " + time.Now().Local().Format("2006-01-02") + "\n" + checkLine + "\n"
+
+	file, err := os.Open("/etc/pacman.d/mirrorlist")
+	if err != nil {
+		fmt.Println("Couldn't read mirrorlist")
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		t := scanner.Text()
+		if t == checkLine {
+			checkResult = true
+		}
+		updatedMirrorlist += t + "\n"
+	}
+
+	if err := scanner.Err(); err != nil {
+		fmt.Println("Error:", err)
+	}
+
+	if !checkResult {
+		err = ioutil.WriteFile("/etc/pacman.d/mirrorlist", []byte(updatedMirrorlist), 0644)
+		if err != nil {
+			fmt.Println("Couldn't write to file: displaying contents:\n", updatedMirrorlist)
+		}
+	}
+
 }

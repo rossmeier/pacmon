@@ -27,6 +27,8 @@ package() {
   install -p -m755 "$srcdir/bin/"* "$pkgdir/usr/bin"
   mkdir -p "${pkgdir}/usr/lib/systemd/system"
   install -p -m644 "$srcdir/pacmon.service" "${pkgdir}/usr/lib/systemd/system"
+  mkdir -p "${pkgdir}/usr/share/libalpm/hooks"
+  install -p -m644 "$srcdir/pacmon-mirrorlist.hook" "${pkgdir}/usr/share/libalpm/hooks"
 
   #mkdir -p "$pkgdir/$GOPATH"
   #cp -Rv --preserve=timestamps "$srcdir/"{src,pkg} "$pkgdir/$GOPATH"
