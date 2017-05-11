@@ -125,7 +125,7 @@ func UDPHandler(src *net.UDPAddr, n int, b []byte) {
 }
 
 func mirrorlist() {
-	serverUrl := "http://" +  udp.GetLocalIP() + ":"+strconv.FormatInt(port, 10)
+	serverUrl := "http://localhost:"+strconv.FormatInt(port, 10)
 	fmt.Println("Mirrorlist, local server:", serverUrl)
 
 	checkLine := "Server = " + serverUrl //TODO: catch cases like "Server =http"...

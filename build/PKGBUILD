@@ -9,8 +9,8 @@ url="https://git.ventos.tk/gydos/pacmon"
 license=('unknown')
 makedepends=('git' 'go')
 options=('!strip' '!emptydirs')
-source=('pacmon.service')
-sha256sums=('d26cb0836633e768b4d802ef4171be9b308c288835225298e5e4a2a2a40f7c2a')
+source=('pacmon.service' 'pacmon-mirrorlist.hook')
+sha256sums=('d26cb0836633e768b4d802ef4171be9b308c288835225298e5e4a2a2a40f7c2a' '82f0a263cc0ebc08e43043d8dec5118afb56f5bbaef64a2021dc0b43f6671c5a')
 install=pacmon.install
 _gourl=git.ventos.tk/gydos/pacmon
 
