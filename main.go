@@ -19,10 +19,10 @@ const (
 	port = 8080
 	UDP_SERVER_COMMAND = "GyDOS: PACMON: server:"
 	UDP_DISCOVER_COMMAND = "GyDOS: PACMON: discover"
-	ErrStatus = errors.New("status")
 )
 
 var (
+	ErrStatus = errors.New("status")
 	servers = make(map[string]bool)
 )
 
