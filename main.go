@@ -19,6 +19,7 @@ const (
 	port = 8080
 	UDP_SERVER_COMMAND = "GyDOS: PACMON: server:"
 	UDP_DISCOVER_COMMAND = "GyDOS: PACMON: discover"
+	ErrStatus = errors.New("status")
 )
 
 var (
@@ -37,7 +38,7 @@ func Proxy(w http.ResponseWriter, r *http.Request, server string) error {
 		_, err := io.Copy(w, resp.Body)
 		return err
 	} else {
-		return errors.New("status")
+		return ErrStatus
 	}
 }
 
@@ -50,10 +51,12 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	ip := r.RemoteAddr[:strings.LastIndex(r.RemoteAddr, ":")]
 	ip = strings.Trim(ip, "[]")
 	if net.ParseIP(ip).IsLoopback() {
-		for server, _ := range servers {
+		for server := range servers {
 			err := Proxy(w, r, server)
 			if err == nil {
 				return
+			} else if err == ErrStatus {
+				delete(servers, server)
 			} else {
 				fmt.Println(err)
 			}
