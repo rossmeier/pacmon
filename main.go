@@ -55,7 +55,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 			err := Proxy(w, r, server)
 			if err == nil {
 				return
-			} else if err == ErrStatus {
+			} else if err != ErrStatus {
 				delete(servers, server)
 			} else {
 				fmt.Println(err)
