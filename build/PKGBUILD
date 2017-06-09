@@ -1,7 +1,7 @@
 # Maintainer: NAME <EMAIL>
 
 pkgname=pacmon
-pkgver=20170509
+pkgver=20170609
 pkgrel=1
 pkgdesc="Pacman LAN mirror"
 arch=('x86_64' 'i686')
@@ -10,7 +10,7 @@ license=('unknown')
 makedepends=('git' 'go')
 options=('!strip' '!emptydirs')
 source=('pacmon.service')
-sha256sums=('d26cb0836633e768b4d802ef4171be9b308c288835225298e5e4a2a2a40f7c2a')
+sha256sums=('fb0cdc6bf8a79c518ded1a5c9cc44e2b26f3ea3adee8947c4746d5996c3b75a2')
 install=pacmon.install
 _gourl=git.ventos.tk/gydos/pacmon
 
