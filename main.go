@@ -11,6 +11,8 @@ import (
 	"time"
 	"io"
 	"errors"
+	"bufio"
+	"io/ioutil"
 )
 
 const (
@@ -20,6 +22,7 @@ const (
 )
 
 var (
+	ErrStatus = errors.New("status")
 	servers = make(map[string]bool)
 )
 
@@ -35,7 +38,7 @@ func Proxy(w http.ResponseWriter, r *http.Request, server string) error {
 		_, err := io.Copy(w, resp.Body)
 		return err
 	} else {
-		return errors.New("status")
+		return ErrStatus
 	}
 }
 
@@ -48,10 +51,12 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	ip := r.RemoteAddr[:strings.LastIndex(r.RemoteAddr, ":")]
 	ip = strings.Trim(ip, "[]")
 	if net.ParseIP(ip).IsLoopback() {
-		for server, _ := range servers {
+		for server := range servers {
 			err := Proxy(w, r, server)
 			if err == nil {
 				return
+			} else if err != ErrStatus {
+				delete(servers, server)
 			} else {
 				fmt.Println(err)
 			}
@@ -85,12 +90,22 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	fmt.Println("Started, local IP:", udp.GetLocalIP())
-	go udp.ServeMulticastUDP(UDPHandler)
-	time.Sleep(time.Second)
-	go udp.SendMulicast(UDP_DISCOVER_COMMAND)
-	time.Sleep(time.Second * 3)
-	server()
+	if len(os.Args) > 1 {
+
+		if os.Args[1] == "mirrorlist" {
+			mirrorlist()
+		}
+
+	} else {
+
+		fmt.Println("Started, local IP:", udp.GetLocalIP())
+		go udp.ServeMulticastUDP(UDPHandler)
+		time.Sleep(time.Second)
+		go udp.SendMulicast(UDP_DISCOVER_COMMAND)
+		time.Sleep(time.Second * 3)
+		server()
+
+	}
 }
 
 func server() {
@@ -106,8 +121,44 @@ func UDPHandler(src *net.UDPAddr, n int, b []byte) {
 	} else if strings.HasPrefix(message, UDP_SERVER_COMMAND) {
 		if strings.Split(message[len(UDP_SERVER_COMMAND) + 1:], ":")[0] != udp.GetLocalIP() {
 			server := "http://" + message[len(UDP_SERVER_COMMAND) + 1:]
-			//fmt.Println("Server found: ", server)
+			fmt.Println("Server found: ", server)
 			servers[server] = true
 		}
 	}
+}
+
+func mirrorlist() {
+	serverUrl := "http://localhost:"+strconv.FormatInt(port, 10)
+	fmt.Println("Mirrorlist, local server:", serverUrl)
+
+	checkLine := "Server = " + serverUrl //TODO: catch cases like "Server =http"...
+	checkResult := false
+	updatedMirrorlist := "# modified by pacmon on " + time.Now().Local().Format("2006-01-02") + "\n" + checkLine + "\n"
+
+	file, err := os.Open("/etc/pacman.d/mirrorlist")
+	if err != nil {
+		fmt.Println("Couldn't read mirrorlist")
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		t := scanner.Text()
+		if t == checkLine {
+			checkResult = true
+		}
+		updatedMirrorlist += t + "\n"
+	}
+
+	if err := scanner.Err(); err != nil {
+		fmt.Println("Error:", err)
+	}
+
+	if !checkResult {
+		err = ioutil.WriteFile("/etc/pacman.d/mirrorlist", []byte(updatedMirrorlist), 0644)
+		if err != nil {
+			fmt.Println("Couldn't write to file: displaying contents:\n", updatedMirrorlist)
+		}
+	}
+
 }
