@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	port = 8080
+	port = 41234
 	UDP_SERVER_COMMAND = "GyDOS: PACMON: server:"
 	UDP_DISCOVER_COMMAND = "GyDOS: PACMON: discover"
 )

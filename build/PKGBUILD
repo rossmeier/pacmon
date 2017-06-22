@@ -1,7 +1,7 @@
 # Maintainer: NAME <EMAIL>
 
 pkgname=pacmon
-pkgver=20170509
+pkgver=20170622
 pkgrel=1
 pkgdesc="Pacman LAN mirror"
 arch=('x86_64' 'i686')
