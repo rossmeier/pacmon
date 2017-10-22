@@ -1,7 +1,7 @@
 # Maintainer: NAME <EMAIL>
 
 pkgname=pacmon
-pkgver=20170622
+pkgver=20171021
 pkgrel=1
 pkgdesc="Pacman LAN mirror"
 arch=('x86_64' 'i686')
@@ -15,20 +15,20 @@ install=pacmon.install
 _gourl=git.ventos.tk/gydos/pacmon
 
 build() {
-  GOPATH="$srcdir" go get -fix -v -x ${_gourl}
+  GOPATH="$srcdir" go get -fix -v -x $_gourl
 }
 
 check() {
-  GOPATH="$GOPATH:$srcdir" go test -v -x ${_gourl}
+  GOPATH="$GOPATH:$srcdir" go test -v -x $_gourl
 }
 
 package() {
   mkdir -p "$pkgdir/usr/bin"
   install -p -m755 "$srcdir/bin/"* "$pkgdir/usr/bin"
-  mkdir -p "${pkgdir}/usr/lib/systemd/system"
-  install -p -m644 "$srcdir/pacmon.service" "${pkgdir}/usr/lib/systemd/system"
-  mkdir -p "${pkgdir}/usr/share/libalpm/hooks"
-  install -p -m644 "$srcdir/pacmon-mirrorlist.hook" "${pkgdir}/usr/share/libalpm/hooks"
+  mkdir -p "$pkgdir/usr/lib/systemd/system"
+  install -p -m644 "$srcdir/pacmon.service" "$pkgdir/usr/lib/systemd/system"
+  mkdir -p "$pkgdir/usr/share/libalpm/hooks"
+  install -p -m644 "$srcdir/pacmon-mirrorlist.hook" "$pkgdir/usr/share/libalpm/hooks"
 
   #mkdir -p "$pkgdir/$GOPATH"
   #cp -Rv --preserve=timestamps "$srcdir/"{src,pkg} "$pkgdir/$GOPATH"

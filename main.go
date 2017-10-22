@@ -1,29 +1,30 @@
 package main
 
 import (
+	"bufio"
+	"errors"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"net"
 	"net/http"
 	"os"
-	"git.ventos.tk/gydos/pacmon/udp"
-	"net"
 	"strconv"
 	"strings"
 	"time"
-	"io"
-	"errors"
-	"bufio"
-	"io/ioutil"
+
+	"git.ventos.tk/gydos/pacmon/udp"
 )
 
 const (
-	port = 41234
-	UDP_SERVER_COMMAND = "GyDOS: PACMON: server:"
+	port                 = 41234
+	UDP_SERVER_COMMAND   = "GyDOS: PACMON: server:"
 	UDP_DISCOVER_COMMAND = "GyDOS: PACMON: discover"
 )
 
 var (
 	ErrStatus = errors.New("status")
-	servers = make(map[string]bool)
+	servers   = make(map[string]bool)
 )
 
 func Proxy(w http.ResponseWriter, r *http.Request, server string) error {
@@ -97,7 +98,6 @@ func main() {
 		}
 
 	} else {
-
 		fmt.Println("Started, local IP:", udp.GetLocalIP())
 		go udp.ServeMulticastUDP(UDPHandler)
 		time.Sleep(time.Second)
@@ -110,7 +110,7 @@ func main() {
 
 func server() {
 	http.HandleFunc("/", handler)
-  	http.ListenAndServe(":"+strconv.FormatInt(port, 10), nil)
+	http.ListenAndServe(":"+strconv.FormatInt(port, 10), nil)
 }
 
 func UDPHandler(src *net.UDPAddr, n int, b []byte) {
@@ -119,8 +119,8 @@ func UDPHandler(src *net.UDPAddr, n int, b []byte) {
 	if message == UDP_DISCOVER_COMMAND {
 		udp.SendMulicast(UDP_SERVER_COMMAND + " " + udp.GetLocalIP() + ":" + strconv.FormatInt(port, 10))
 	} else if strings.HasPrefix(message, UDP_SERVER_COMMAND) {
-		if strings.Split(message[len(UDP_SERVER_COMMAND) + 1:], ":")[0] != udp.GetLocalIP() {
-			server := "http://" + message[len(UDP_SERVER_COMMAND) + 1:]
+		if strings.Split(message[len(UDP_SERVER_COMMAND)+1:], ":")[0] != udp.GetLocalIP() {
+			server := "http://" + message[len(UDP_SERVER_COMMAND)+1:]
 			fmt.Println("Server found: ", server)
 			servers[server] = true
 		}
@@ -128,7 +128,7 @@ func UDPHandler(src *net.UDPAddr, n int, b []byte) {
 }
 
 func mirrorlist() {
-	serverUrl := "http://localhost:"+strconv.FormatInt(port, 10)
+	serverUrl := "http://localhost:" + strconv.FormatInt(port, 10)
 	fmt.Println("Mirrorlist, local server:", serverUrl)
 
 	checkLine := "Server = " + serverUrl //TODO: catch cases like "Server =http"...
