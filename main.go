@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"git.ventos.tk/gydos/pacmon/udp"
+	"github.com/veecue/pacmon/udp"
 )
 
 const (
