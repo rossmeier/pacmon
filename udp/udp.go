@@ -16,6 +16,7 @@ func GetLocalIP() string {
 		addrs, err := net.InterfaceAddrs()
 		if err != nil {
 			time.Sleep(time.Second)
+			continue
 		}
 		for _, address := range addrs {
 			// check the address type and if it is not a loopback the display it

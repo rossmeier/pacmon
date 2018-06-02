@@ -27,6 +27,7 @@ var (
 	servers   = make(map[string]bool)
 )
 
+// Proxy proxies the incoming request from Pacman to another instance of pacmon
 func Proxy(w http.ResponseWriter, r *http.Request, server string) error {
 	resp, err := http.Get(server + r.URL.String())
 	if err != nil {
@@ -52,6 +53,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	ip := r.RemoteAddr[:strings.LastIndex(r.RemoteAddr, ":")]
 	ip = strings.Trim(ip, "[]")
 	if net.ParseIP(ip).IsLoopback() {
+		// Redirect requests coming from local Pacman to other instances in the LAN
 		for server := range servers {
 			err := Proxy(w, r, server)
 			if err == nil {
@@ -62,25 +64,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 				fmt.Println(err)
 			}
 		}
+		// No LAN mirror could provide the file, let pacman fall back to the rest of its mirrorlist
 		http.NotFound(w, r)
-		/*mirrorlist, err := os.Open("/etc/pacman.d/mirrorlist")
-		if err != nil {
-			log.Fatal(err)
-		}
-		bufR := bufio.NewReader(mirrorlist)
-		for {
-			l, _, err := bufR.ReadLine()
-			if err != nil {
-				continue
-			}
-			sl := string(l)
-			if strings.HasPrefix(sl, "#") {
-				continue
-			}
-			if strings.HasPrefix(sl, "Server = ") {
-				Proxy(w, r, strings.TrimPrefix(sl, "Server = "))
-			}
-		}*/
 	} else {
 		if _, err := os.Stat(packagePath); os.IsNotExist(err) {
 			http.NotFound(w, r)
@@ -91,12 +76,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	if len(os.Args) > 1 {
-
-		if os.Args[1] == "mirrorlist" {
-			mirrorlist()
-		}
-
+	if len(os.Args) > 1 && os.Args[1] == "mirrorlist" {
+		mirrorlist()
 	} else {
 		fmt.Println("Started, local IP:", udp.GetLocalIP())
 		go udp.ServeMulticastUDP(UDPHandler)
@@ -104,7 +85,6 @@ func main() {
 		go udp.SendMulicast(UDP_DISCOVER_COMMAND)
 		time.Sleep(time.Second * 3)
 		server()
-
 	}
 }
 
@@ -114,7 +94,7 @@ func server() {
 }
 
 func UDPHandler(src *net.UDPAddr, n int, b []byte) {
-	var message = string(b[:n])
+	message := string(b[:n])
 
 	if message == UDP_DISCOVER_COMMAND {
 		udp.SendMulicast(UDP_SERVER_COMMAND + " " + udp.GetLocalIP() + ":" + strconv.FormatInt(port, 10))
@@ -133,7 +113,9 @@ func mirrorlist() {
 
 	checkLine := "Server = " + serverUrl //TODO: catch cases like "Server =http"...
 	checkResult := false
-	updatedMirrorlist := "# modified by pacmon on " + time.Now().Local().Format("2006-01-02") + "\n" + checkLine + "\n"
+	var updatedMirrorlist strings.Builder
+	updatedMirrorlist.WriteString("# modified by pacmon on " + time.Now().Local().Format("2006-01-02") +
+		"\n" + checkLine + "\n")
 
 	file, err := os.Open("/etc/pacman.d/mirrorlist")
 	if err != nil {
@@ -147,7 +129,8 @@ func mirrorlist() {
 		if t == checkLine {
 			checkResult = true
 		}
-		updatedMirrorlist += t + "\n"
+		updatedMirrorlist.WriteString(t)
+		updatedMirrorlist.WriteString("\n")
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -155,10 +138,9 @@ func mirrorlist() {
 	}
 
 	if !checkResult {
-		err = ioutil.WriteFile("/etc/pacman.d/mirrorlist", []byte(updatedMirrorlist), 0644)
+		err = ioutil.WriteFile("/etc/pacman.d/mirrorlist", []byte(updatedMirrorlist.String()), 0644)
 		if err != nil {
 			fmt.Println("Couldn't write to file: displaying contents:\n", updatedMirrorlist)
 		}
 	}
-
 }
